@@ -1,6 +1,6 @@
 {
   "domain": "kiauvoeurope",
-  "name": "Kia Uvo Europe",
+  "name": "Kia UVO Europe",
   "documentation": "https://github.com/alexanderwink/kiauvoeurope",
   "dependencies": [],
   "config_flow": true,
