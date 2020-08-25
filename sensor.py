@@ -54,6 +54,16 @@ class UVOSensor(Entity):
         return self._sensor_name
 
     @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return f"{DOMAIN}_{self._sensor_name}"
+    
+    @property
+    def device_class(self) -> str:
+        """Return a device class."""
+        return "battery"
+
+    @property
     def state(self):
         """Return the state of the sensor."""
         return self._state

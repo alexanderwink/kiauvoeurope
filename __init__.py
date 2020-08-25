@@ -24,8 +24,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
     _LOGGER.debug("Setting up Kia component version %s", VERSION)
-    username = entry.data.get(CONF_USERNAME)
-    password = entry.data.get(CONF_PASSWORD)
+    if CONF_USERNAME not in entry.data:
+        entry.data[CONF_USERNAME] = ""
+    if CONF_PASSWORD not in entry.data:
+        entry.data[CONF_PASSWORD] = ""
     hass.data[DOMAIN]["config"] = entry
 
     for component in PLATFORMS:
