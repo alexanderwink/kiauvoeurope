@@ -4,19 +4,20 @@ from homeassistant.helpers import device_registry
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt
-from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, UNIT_PERCENTAGE
+from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, PERCENTAGE
 from datetime import timedelta
 from typing import List, Dict, Callable, Any
 from .const import DOMAIN
 import requests, json, time, re
 import logging
+from jsonpath import jsonpath
 
-SCAN_INTERVAL = timedelta(seconds=180)
+SCAN_INTERVAL = timedelta(seconds=1800)
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_TYPES = {
     "batteryStatus": {
-        "path": "evStatus.batteryStatus",
+        "path": "$.evStatus.batteryStatus",
         "attrs": [],
         "unit": None,
         "icon": "mdi:battery",
@@ -27,12 +28,12 @@ SENSOR_TYPES = {
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the Kia sensor."""
     config = hass.data[DOMAIN]["config"]
-    
+
     sensors = []
-        
+
     for key in SENSOR_TYPES:
         sensors.append(
-            UVOSensor(DOMAIN + "_" + key, None, config.data[CONF_USERNAME], config.data[CONF_PASSWORD])
+            UVOSensor(DOMAIN + "_" + key, None, config.data[CONF_USERNAME], config.data[CONF_PASSWORD], SENSOR_TYPES[key]["path"])
         )
 
     async_add_entities(sensors)
@@ -41,9 +42,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class UVOSensor(Entity):
     """Representation of a Sensor."""
 
-    def __init__(self, name, state, username, password):
+    def __init__(self, name, state, username, password, path):
         """Initialize the sensor."""
         self._state = state
+        self.path = path
         self._sensor_name = name
         self.username = username
         self.password = password
@@ -57,7 +59,7 @@ class UVOSensor(Entity):
     def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{DOMAIN}_{self._sensor_name}"
-    
+
     @property
     def device_class(self) -> str:
         """Return a device class."""
@@ -71,7 +73,7 @@ class UVOSensor(Entity):
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
-        return UNIT_PERCENTAGE
+        return PERCENTAGE
 
     def update(self):
         """Fetch new state data for the sensor.
@@ -94,7 +96,7 @@ class UVOSensor(Entity):
         resp = mykia.get_vehicles(accessToken, deviceId)
         vehicleId = resp["resMsg"]["vehicles"][0]["vehicleId"]
         resp = mykia.get_vehicle_status(accessToken, deviceId, vehicleId)
-        batteryLevel = resp["resMsg"]["evStatus"]["batteryStatus"]
+        batteryLevel = jsonpath(resp["resMsg"], self.path)[0]
 
         self._state = batteryLevel
 
